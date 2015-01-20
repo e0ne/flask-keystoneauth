@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = flask_keystoneauth
+omit = flask_keystoneauth/tests/*,flask_keystoneauth/openstack/*
+
+[report]
+ignore-errors = True

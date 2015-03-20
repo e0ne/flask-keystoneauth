@@ -68,7 +68,7 @@ class KeystoneAuth(object):
         """
         pass
 
-    def authenticate(self, username, password):
+    def authenticate(self, username=None, password=None):
         self.auth_session = self._get_keystone_session(username=username,
                                                        password=password)
 
@@ -81,8 +81,7 @@ class KeystoneAuth(object):
         except (keystone_exceptions.Unauthorized,
                 keystone_exceptions.Forbidden,
                 keystone_exceptions.NotFound) as exc:
-            LOG.info(_LI(_('Authentication failed: %s')), exc)
-
+            LOG.info(_LI('Authentication failed: %s'), exc)
             return False
         except (keystone_exceptions.ClientException,
                 keystone_exceptions.AuthorizationFailure) as exc:
@@ -111,7 +110,8 @@ class KeystoneAuth(object):
             session=ks_session,
             auth_url=self.app.config['OS_AUTH_URL'])
 
-        username = kwargs.get('username', self.app.config['OS_USERNAME'])
+        username = kwargs.get('username') or self.app.config['OS_USERNAME']
+        password = kwargs.get('password') or self.app.config['OS_PASSWORD']
         user_domain_name = self.app.config['OS_USER_DOMAIN_NAME']
         user_domain_id = self.app.config['OS_USER_DOMAIN_ID']
 
@@ -123,23 +123,23 @@ class KeystoneAuth(object):
                     # Use v3 auth
                     auth = self.get_v3_auth(v3_auth_url,
                                             username=username,
-                                            password=kwargs.get('password'))
+                                            password=password)
                 else:
                     # Use v2 auth
                     auth = self.get_v2_auth(v2_auth_url,
                                             username=username,
-                                            password=kwargs.get('password'))
+                                            password=password)
 
         elif v3_auth_url:
             # Support only v3
             auth = self.get_v3_auth(v3_auth_url,
                                     username=username,
-                                    password=kwargs.get('password'))
+                                    password=password)
         elif v2_auth_url:
             # Support only v2
             auth = self.get_v2_auth(v2_auth_url,
                                     username=username,
-                                    password=kwargs.get('password'))
+                                    password=password)
         else:
             raise Exception('Unable to determine the Keystone version '
                             'to authenticate with using the given '
@@ -154,7 +154,6 @@ class KeystoneAuth(object):
         password = kwargs.get('password', self.app.config['OS_PASSWORD'])
         tenant_id = self.app.config['OS_TENANT_ID']
         tenant_name = self.app.config['OS_TENANT_NAME']
-
         return v2_auth.Password(
             v2_auth_url,
             username=username,
